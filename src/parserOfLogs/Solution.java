@@ -86,6 +86,39 @@ public class Solution {
             System.out.println("c "+ date1+" по "+null);
             System.out.println(logParser.getDoneTaskUsers(date1, null, 48));
 
+            System.out.println("\ngetDatesForUserAndEvent__________________________________________________________________");
+            System.out.println(logParser.getDatesForUserAndEvent("Eduard Petrovich Morozko", Event.LOGIN, null, null));
+            System.out.println("c "+ date3+" по "+null);
+            System.out.println(logParser.getDatesForUserAndEvent("Amigo", Event.SOLVE_TASK, date3, null));
+            System.out.println("\ngetDatesWhenSomethingFailed__________________________________________________________________");
+            System.out.println(logParser.getDatesWhenSomethingFailed(null, null));
+            System.out.println("c "+ date3+" по "+null);
+            System.out.println(logParser.getDatesWhenSomethingFailed(date3, null));
+            System.out.println("\ngetDatesWhenErrorHappened__________________________________________________________________");
+            System.out.println(logParser.getDatesWhenErrorHappened(null, null));
+            System.out.println("c "+ date3+" по "+null);
+            System.out.println(logParser.getDatesWhenErrorHappened(date3, null));
+            System.out.println("\ngetDateWhenUserLoggedFirstTime__________________________________________________________________");
+            System.out.println(logParser.getDateWhenUserLoggedFirstTime("Eduard Petrovich Morozko", null, null));
+            System.out.println("c "+ date2+" по "+null);
+            System.out.println(logParser.getDateWhenUserLoggedFirstTime("Vasya Pupkin", date2, null));
+            System.out.println("\ngetDateWhenUserSolvedTask__________________________________________________________________");
+            System.out.println(logParser.getDateWhenUserSolvedTask("Amigo", 18, null, null));
+            System.out.println("c "+ date2+" по "+null);
+            System.out.println(logParser.getDateWhenUserSolvedTask("Vasya Pupkin", 1, date2, null));
+            System.out.println("\ngetDateWhenUserDoneTask__________________________________________________________________");
+            System.out.println(logParser.getDateWhenUserDoneTask("Vasya Pupkin", 15, null, null));
+            System.out.println("c "+ date2+" по "+null);
+            System.out.println(logParser.getDateWhenUserDoneTask("Eduard Petrovich Morozko", 48, date2, null));
+            System.out.println("\ngetDatesWhenUserWroteMessage__________________________________________________________________");
+            System.out.println(logParser.getDatesWhenUserWroteMessage("Vasya Pupkin", null, null));
+            System.out.println("c "+ date1+" по "+date2);
+            System.out.println(logParser.getDatesWhenUserWroteMessage("Eduard Petrovich Morozko", date1, date2));
+            System.out.println("\ngetDatesWhenUserDownloadedPlugin__________________________________________________________________");
+            System.out.println(logParser.getDatesWhenUserDownloadedPlugin("Vasya Pupkin", null, null));
+            System.out.println("c "+ date2+" по "+null);
+            System.out.println(logParser.getDatesWhenUserDownloadedPlugin("Eduard Petrovich Morozko", null, null));
+
         } catch (ParseException e) {
             e.printStackTrace();
         }

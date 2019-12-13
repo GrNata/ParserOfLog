@@ -1,5 +1,6 @@
 package parserOfLogs;
 
+import parserOfLogs.query.DateQuery;
 import parserOfLogs.query.IPQuery;
 import parserOfLogs.query.UserQuery;
 
@@ -13,7 +14,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
-public class LogParser implements IPQuery, UserQuery {
+public class LogParser implements IPQuery, UserQuery, DateQuery {
     private Path logDir;
     private DateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss", Locale.ENGLISH);
 
@@ -470,6 +471,165 @@ public class LogParser implements IPQuery, UserQuery {
                 sSet.add(splitList[1]);
         }
         return sSet;
+    }
+
+//_______________________________DateQuery______________________________________________________________________________________
+
+    @Override
+    public Set<Date> getDatesForUserAndEvent(String user, Event event, Date after, Date before) {
+        // должен возвращать даты, когда определенный пользователь произвел определенное событие.
+        List<String> sList = readFile();
+        Set<Date> sSet = new HashSet<>();
+
+        for (String str : sList){
+            String[] splitList = splitList(str);
+            Date date = formatLogDate(splitList[2]);
+
+            if (user.equals(splitList[1])
+                    && event.toString().equals(splitList[3])
+                    && isDate(date, after, before))
+                sSet.add(date);
+        }
+        return sSet;
+    }
+
+    @Override
+    public Set<Date> getDatesWhenSomethingFailed(Date after, Date before) {
+        //    должен возвращать даты, когда любое событие не выполнилось (статус FAILED).
+        List<String> sList = readFile();
+        Set<Date> sSet = new HashSet<>();
+
+        for (String str : sList){
+            String[] splitList = splitList(str);
+            Date date = formatLogDate(splitList[2]);
+
+            if (Status.FAILED.toString().equals(splitList[4])
+                    && isDate(date, after, before))
+                sSet.add(date);
+        }
+        return sSet;
+    }
+
+    @Override
+    public Set<Date> getDatesWhenErrorHappened(Date after, Date before) {
+        // должен возвращать даты, когда любое событие закончилось ошибкой (статус ERROR).
+        List<String> sList = readFile();
+        Set<Date> sSet = new HashSet<>();
+
+        for (String str : sList){
+            String[] splitList = splitList(str);
+            Date date = formatLogDate(splitList[2]);
+
+            if (Status.ERROR.toString().equals(splitList[4])
+                    && isDate(date, after, before))
+                sSet.add(date);
+        }
+        return sSet;
+    }
+
+    @Override
+    public Date getDateWhenUserLoggedFirstTime(String user, Date after, Date before) {
+        //   должен возвращать дату, когда пользователь залогинился впервые за указанный период. Если такой даты в логах нет - null.
+        List<String> sList = readFile();
+        Set<Date> sSet = new HashSet<>();
+
+        TreeSet<Date> dateSet = new TreeSet<>();
+
+        for (String str : sList){
+            String[] splitList = splitList(str);
+            Date date = formatLogDate(splitList[2]);
+            if (user.equals(splitList[1])
+                    && Event.LOGIN.toString().equals(splitList[3])
+                    && isDate(date, after, before))
+                dateSet.add(date);
+        }
+        if (dateSet.size() > 0)
+            return dateSet.first();
+        return null;
+    }
+
+    @Override
+    public Date getDateWhenUserSolvedTask(String user, int task, Date after, Date before) {
+        //   должен возвращать дату, когда пользователь впервые попытался решить определенную задачу. Если такой даты в логах нет - null.
+        List<String> sList = readFile();
+        Set<Date> sSet = new HashSet<>();
+
+        TreeSet<Date> dateSet = new TreeSet<>();
+
+        for (String str : sList){
+            String[] splitList = splitList(str);
+            Date date = formatLogDate(splitList[2]);
+            if (user.equals(splitList[1])
+                    && Event.SOLVE_TASK.toString().equals(splitList[3])
+                    && Integer.parseInt(splitList[5]) == task
+                    && isDate(date, after, before))
+                dateSet.add(date);
+        }
+        if (dateSet.size() > 0)
+            return dateSet.first();
+        return null;
+    }
+
+    @Override
+    public Date getDateWhenUserDoneTask(String user, int task, Date after, Date before) {
+        //  должен возвращать дату, когда пользователь впервые решил определенную задачу. Если такой даты в логах нет - null.
+        List<String> sList = readFile();
+//        Set<Date> sSet = new HashSet<>();
+
+        TreeSet<Date> dateSet = new TreeSet<>();
+
+        for (String str : sList){
+            String[] splitList = splitList(str);
+            Date date = formatLogDate(splitList[2]);
+            if (user.equals(splitList[1])
+                    && Event.DONE_TASK.toString().equals(splitList[3])
+                    && Integer.parseInt(splitList[5]) == task
+                    && isDate(date, after, before))
+                dateSet.add(date);
+        }
+        if (dateSet.size() > 0)
+            return dateSet.first();
+        return null;
+    }
+
+    @Override
+    public Set<Date> getDatesWhenUserWroteMessage(String user, Date after, Date before) {
+        //  должен возвращать даты, когда пользователь написал сообщение.
+        List<String> sList = readFile();
+        Set<Date> dateSet = new HashSet<>();
+
+        for (String str : sList){
+            String[] splitList = splitList(str);
+            Date date = formatLogDate(splitList[2]);
+            if (user.equals(splitList[1])
+                    && Event.WRITE_MESSAGE.toString().equals(splitList[3])
+//                    && Status.OK.toString().equals(splitList[4])
+                    && isDate(date, after, before)
+            )
+                dateSet.add(date);
+        }
+//        if (dateSet.size() > 0)
+        return dateSet;
+    }
+
+    @Override
+    public Set<Date> getDatesWhenUserDownloadedPlugin(String user, Date after, Date before) {
+        //  должен возвращать даты, когда пользователь скачал плагин.
+        List<String> sList = readFile();
+        Set<Date> dateSet = new HashSet<>();
+
+        for (String str : sList){
+            String[] splitList = splitList(str);
+            Date date = formatLogDate(splitList[2]);
+            if (user.equals(splitList[1])
+                    && Event.DOWNLOAD_PLUGIN.toString().equals(splitList[3])
+//                    && Status.OK.toString().equals(splitList[4])
+                    && isDate(date, after, before)
+            )
+                dateSet.add(date);
+        }
+//        if (dateSet.size() > 0)
+        return dateSet;
     }
 
 }
