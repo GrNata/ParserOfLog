@@ -160,6 +160,15 @@ public class Solution {
             System.out.println("c "+ date1+" по "+null);
             System.out.println(logParser.getAllDoneTasksAndTheirNumber(date1, null));
 
+            System.out.println("\nexecute:_________________________________________________");
+            System.out.println(logParser.execute("get ip"));
+            System.out.println(logParser.execute("get user"));
+            System.out.println(logParser.execute("get date"));
+            System.out.println(logParser.execute("get event"));
+            System.out.println(logParser.execute("get status"));
+
+
+
         } catch (ParseException e) {
             e.printStackTrace();
         }

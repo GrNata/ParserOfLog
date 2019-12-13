@@ -1,9 +1,6 @@
 package parserOfLogs;
 
-import parserOfLogs.query.DateQuery;
-import parserOfLogs.query.EventQuery;
-import parserOfLogs.query.IPQuery;
-import parserOfLogs.query.UserQuery;
+import parserOfLogs.query.*;
 
 import java.io.File;
 import java.io.FilenameFilter;
@@ -21,7 +18,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
-public class LogParser implements IPQuery, UserQuery, DateQuery, EventQuery {
+public class LogParser implements IPQuery, UserQuery, DateQuery, EventQuery, QLQuery {
     private Path logDir;
     private DateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss", Locale.ENGLISH);
 
@@ -820,5 +817,40 @@ public class LogParser implements IPQuery, UserQuery, DateQuery, EventQuery {
             }
         }
         return map;
+    }
+
+//________________________QLQuery_______________________________________________________________________________________
+    @Override
+    public Set<Object> execute(String query) {
+        switch (query){
+            case "get ip" :     return new HashSet<>(getUniqueIPs(null, null));
+            case "get user" :   return new HashSet<>(getAllUsers());
+            case "get date" :   return new HashSet<>(getAllDate());
+            case "get event":   return new HashSet<>(getAllEvents(null, null));
+            case "get status":  return new HashSet<>(getAllStatus());
+            default:    return null;
+        }
+    }
+
+    // Получение всех дат из логов
+    private Set<Date> getAllDate(){
+        List<String> sList = readFile();
+        List<UserLog> userLogs = getUserLog(sList, null, null);
+        Set<Date> sDate = new HashSet<>();
+        for (UserLog ul : userLogs){
+            sDate.add(ul.getDate());
+        }
+        return sDate;
+    }
+
+    // получение всех статусов из логов
+    private Set<Status> getAllStatus(){
+        List<String> sList = readFile();
+        List<UserLog> userLogs = getUserLog(sList, null, null);
+        Set<Status> sStatus = new HashSet<>();
+        for (UserLog ul : userLogs){
+            sStatus.add(ul.getStatus());
+        }
+        return sStatus;
     }
 }
