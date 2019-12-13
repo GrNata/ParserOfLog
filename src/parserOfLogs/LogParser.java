@@ -1,20 +1,27 @@
 package parserOfLogs;
 
 import parserOfLogs.query.DateQuery;
+import parserOfLogs.query.EventQuery;
 import parserOfLogs.query.IPQuery;
 import parserOfLogs.query.UserQuery;
 
 import java.io.File;
 import java.io.FilenameFilter;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.logging.Filter;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
-public class LogParser implements IPQuery, UserQuery, DateQuery {
+public class LogParser implements IPQuery, UserQuery, DateQuery, EventQuery {
     private Path logDir;
     private DateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss", Locale.ENGLISH);
 
@@ -22,6 +29,7 @@ public class LogParser implements IPQuery, UserQuery, DateQuery {
         this.logDir = logDir;
     }
 
+    //_______________IPQuery____________________________________________________________________________________
     @Override
     public int getNumberOfUniqueIPs(Date after, Date before) {
 //возвращать количество уникальных IP адресов за выбранный период. Здесь и далее, если в методе есть параметры Date after и Date before,
@@ -179,14 +187,14 @@ public class LogParser implements IPQuery, UserQuery, DateQuery {
         }
         return sSet;
     }
-    //____________________________________________________________________________________________________________________
+    //_______________Вспомогательные методы_____________________________________________________________________________________________________
     // Чтение файла
     public List<String> readFile(){
         List<String> sList = new ArrayList<>();
 
         try {
             if (Files.isDirectory(logDir)) {
-//  ищем файлы с расширением лог в данной директории, затем считываем в sList
+
                 for (File f : logDir.toFile().listFiles(new FilenameFilter() {
                     @Override
                     public boolean accept(File dir, String name) {
@@ -219,7 +227,7 @@ public class LogParser implements IPQuery, UserQuery, DateQuery {
     private String[] splitList(String str){
         String[] arrStr = new String[6];
         String[] arr = str.split("\\t");
-// последний элемнт содержит номер задачи
+// последний элемент содержит номер задачи
         for (int i=0; i<arr.length; i++)
             arrStr[i] = arr[i];
 
@@ -234,6 +242,29 @@ public class LogParser implements IPQuery, UserQuery, DateQuery {
         return arrStr;
     }
 
+    // Cоздание объекта UserLog из массива
+    private UserLog getUserLog(String str){
+        String[] arrStr = new String[6];
+        String[] arr = str.split("\\t");
+// последний элемент содержит номер задачи
+        for (int i=0; i<arr.length; i++)
+            arrStr[i] = arr[i];
+
+        if (arrStr[3].contains(" ")) {
+            String tempStr = arrStr[3];
+            arrStr[3] = tempStr.substring(0, tempStr.indexOf(" "));
+            arrStr[5] = tempStr.substring(tempStr.indexOf(" ")).trim();
+        }
+
+        UserLog userLog;
+        if (arrStr[5] == null)
+            userLog = new UserLog(arrStr[0], arrStr[1], formatLogDate(arrStr[2]),
+                    Event.valueOf(arrStr[3]), Status.valueOf(arrStr[4]));
+        else userLog = new UserLog(arrStr[0], arrStr[1], formatLogDate(arrStr[2]),
+                Event.valueOf(arrStr[3]), Integer.parseInt(arrStr[5]), Status.valueOf(arrStr[4]));
+        return userLog;
+    }
+
     //  Проверка даты под условие
     private boolean isDate(Date date, Date after, Date before){
 
@@ -241,6 +272,18 @@ public class LogParser implements IPQuery, UserQuery, DateQuery {
                 (before == null || date.before(before) || before.equals(date)))
             return true;
         return false;
+    }
+
+    //  создание списка объектов UserLog с сортировкой по дате
+    private List<UserLog> getUserLog(List<String> sList, Date after, Date before){
+        List<UserLog> userLogs = new ArrayList<>();
+
+        for (String str : sList) {
+            UserLog uLog = getUserLog(str);
+            if (isDate(uLog.getDate(), after, before))
+                userLogs.add(getUserLog(str));
+        }
+        return userLogs;
     }
 
     //      форматирование заданной даты
@@ -282,7 +325,7 @@ public class LogParser implements IPQuery, UserQuery, DateQuery {
 //
 //__________________________________________________________________________________
 
-    //______________________________________________________________________
+    //_______________UserQuery_______________________________________________________
     @Override
     public Set<String> getAllUsers() {
         //  должен возвращать всех пользователей.
@@ -472,7 +515,6 @@ public class LogParser implements IPQuery, UserQuery, DateQuery {
         }
         return sSet;
     }
-
 //_______________________________DateQuery______________________________________________________________________________________
 
     @Override
@@ -632,4 +674,151 @@ public class LogParser implements IPQuery, UserQuery, DateQuery {
         return dateSet;
     }
 
+//____________________EventQuery________________________________________________________________________________________
+
+    @Override
+    public int getNumberOfAllEvents(Date after, Date before) {
+        //должен возвращать количество событий за указанный период.
+        List<String> sList = readFile();
+        List<UserLog> userLogs = getUserLog(sList, after, before);
+        Set<Event> sEvent = new HashSet<>();
+//        int count = 0;
+        for (UserLog ul : userLogs) {
+            if (ul.getEvent() != null)
+                sEvent.add(ul.getEvent());
+//                count++;
+        }
+        return sEvent.size();
+    }
+
+    @Override
+    public Set<Event> getAllEvents(Date after, Date before) {
+        //  должен возвращать все события за указанный период.
+        List<String> sList = readFile();
+        List<UserLog> userLogs = getUserLog(sList, after, before);
+        Set<Event> sEvent = new HashSet<>();
+        for (UserLog ul : userLogs){
+            if (ul.getEvent() != null)
+                sEvent.add(ul.getEvent());
+        }
+        return sEvent;
+    }
+
+    @Override
+    public Set<Event> getEventsForIP(String ip, Date after, Date before) {
+        //  должен возвращать события, которые происходили с указанного IP.
+        List<String> sList = readFile();
+        List<UserLog> userLogs = getUserLog(sList, after, before);
+        Set<Event> sEvent = new HashSet<>();
+        for (UserLog ul : userLogs){
+            if (ul.getIp().equals(ip))
+                sEvent.add(ul.getEvent());
+        }
+        return sEvent;
+    }
+
+    @Override
+    public Set<Event> getEventsForUser(String user, Date after, Date before) {
+        //    должен возвращать события, которые инициировал определенный пользователь.
+        List<String> sList = readFile();
+        List<UserLog> userLogs = getUserLog(sList, after, before);
+        Set<Event> sEvent = new HashSet<>();
+        for (UserLog ul : userLogs){
+            if (ul.getUser().equals(user))
+                sEvent.add(ul.getEvent());
+        }
+        return sEvent;
+    }
+
+    @Override
+    public Set<Event> getFailedEvents(Date after, Date before) {
+        //   должен возвращать события, которые не выполнились.
+        List<String> sList = readFile();
+        List<UserLog> userLogs = getUserLog(sList, after, before);
+        Set<Event> sEvent = new HashSet<>();
+        for (UserLog ul : userLogs){
+            if (ul.getStatus().equals(Status.FAILED))
+                sEvent.add(ul.getEvent());
+        }
+        return sEvent;
+    }
+
+    @Override
+    public Set<Event> getErrorEvents(Date after, Date before) {
+        // должен возвращать события, которые завершились ошибкой.
+        List<String> sList = readFile();
+        List<UserLog> userLogs = getUserLog(sList, after, before);
+        Set<Event> sEvent = new HashSet<>();
+        for (UserLog ul : userLogs){
+            if (ul.getStatus().equals(Status.ERROR))
+                sEvent.add(ul.getEvent());
+        }
+        return sEvent;
+    }
+
+    @Override
+    public int getNumberOfAttemptToSolveTask(int task, Date after, Date before) {
+        //  должен возвращать количество попыток решить определенную задачу.
+        List<String> sList = readFile();
+        List<UserLog> userLogs = getUserLog(sList, after, before);
+        int countTask = 0;
+        for (UserLog ul : userLogs){
+            if (ul.getTask() == task && ul.getEvent().equals(Event.SOLVE_TASK))
+                countTask++;
+        }
+        return countTask;
+    }
+
+    @Override
+    public int getNumberOfSuccessfulAttemptToSolveTask(int task, Date after, Date before) {
+        //  должен возвращать количество успешных решений определенной задачи.
+        List<String> sList = readFile();
+        List<UserLog> userLogs = getUserLog(sList, after, before);
+        int countTask = 0;
+        for (UserLog ul : userLogs){
+            if (ul.getTask() == task && ul.getEvent().equals(Event.DONE_TASK))
+                countTask++;
+        }
+        return countTask;
+    }
+
+    @Override
+    public Map<Integer, Integer> getAllSolvedTasksAndTheirNumber(Date after, Date before) {
+        //  должен возвращать мапу (номер_задачи : количество_попыток_решить_ее).
+        List<String> sList = readFile();
+        List<UserLog> userLogs = getUserLog(sList, after, before);
+        Map<Integer, Integer> map = new HashMap<>();
+        int count = 0;
+        for (UserLog ul : userLogs){
+            if (ul.getEvent().equals(Event.SOLVE_TASK)) {
+                if (map.get(ul.getTask()) != null) {
+                    count = map.get(ul.getTask());
+                    count++;
+                } else
+                    count = 1;
+                map.put(ul.getTask(), count);
+            }
+        }
+        return map;
+    }
+
+    @Override
+    public Map<Integer, Integer> getAllDoneTasksAndTheirNumber(Date after, Date before) {
+        //  должен возвращать мапу (номер_задачи : сколько_раз_ее_решили).
+        List<String> sList = readFile();
+        List<UserLog> userLogs = getUserLog(sList, after, before);
+        Map<Integer, Integer> map = new HashMap<>();
+        int count = 0;
+        for (UserLog ul : userLogs){
+            if (ul.getEvent().equals(Event.DONE_TASK)) {
+                if (map.get(ul.getTask()) != null) {
+                    count = map.get(ul.getTask());
+                    count++;
+                } else
+                    count = 1;
+                map.put(ul.getTask(), count);
+            }
+        }
+        return map;
+    }
 }

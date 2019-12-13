@@ -119,6 +119,47 @@ public class Solution {
             System.out.println("c "+ date2+" по "+null);
             System.out.println(logParser.getDatesWhenUserDownloadedPlugin("Eduard Petrovich Morozko", null, null));
 
+            System.out.println("\ngetNumberOfAllEvents__________________________________________________________________");
+            System.out.println(logParser.getNumberOfAllEvents(null, null));
+            System.out.println("c "+ date1+" по "+date2);
+            System.out.println(logParser.getNumberOfAllEvents(date1, date2));
+            System.out.println("\ngetAllEvents__________________________________________________________________");
+            System.out.println(logParser.getAllEvents(null, null));
+            System.out.println("c "+ date1+" по "+date2);
+            System.out.println(logParser.getAllEvents(date1, date2));
+            System.out.println("\ngetEventsForIP__________________________________________________________________");
+            System.out.println(logParser.getEventsForIP("192.168.100.2", null, null));
+            System.out.println("c "+ date1+" по "+date2);
+            System.out.println(logParser.getEventsForIP("146.34.15.5", date1, date2));
+            System.out.println("\ngetEventsForUser__________________________________________________________________");
+            System.out.println(logParser.getEventsForUser("Amigo", null, null));
+            System.out.println("c "+ date1+" по "+date2);
+            System.out.println(logParser.getEventsForUser("Eduard Petrovich Morozko", date1, date2));
+            System.out.println("\ngetFailedEvents__________________________________________________________________");
+            System.out.println(logParser.getFailedEvents(null, null));
+            System.out.println("c "+ date1+" по "+date2);
+            System.out.println(logParser.getFailedEvents(date1, date2));
+            System.out.println("\ngetErrorEvents__________________________________________________________________");
+            System.out.println(logParser.getErrorEvents(null, null));
+            System.out.println("c "+ date1+" по "+date2);
+            System.out.println(logParser.getErrorEvents(date1, date2));
+            System.out.println("\ngetNumberOfAttemptToSolveTask__________________________________________________________________");
+            System.out.println(logParser.getNumberOfAttemptToSolveTask(18, null, null));
+            System.out.println("c "+ date1+" по "+null);
+            System.out.println(logParser.getNumberOfAttemptToSolveTask(1, date1, null));
+            System.out.println("\ngetNumberOfSuccessfulAttemptToSolveTask__________________________________________________________________");
+            System.out.println(logParser.getNumberOfSuccessfulAttemptToSolveTask(15, null, null));
+            System.out.println("c "+ date1+" по "+null);
+            System.out.println(logParser.getNumberOfSuccessfulAttemptToSolveTask(48, date1, null));
+            System.out.println("\ngetAllSolvedTasksAndTheirNumber__________________________________________________________________");
+            System.out.println(logParser.getAllSolvedTasksAndTheirNumber(null, null));
+            System.out.println("c "+ date1+" по "+null);
+            System.out.println(logParser.getAllSolvedTasksAndTheirNumber(date1, null));
+            System.out.println("\ngetAllDoneTasksAndTheirNumber__________________________________________________________________");
+            System.out.println(logParser.getAllDoneTasksAndTheirNumber(null, null));
+            System.out.println("c "+ date1+" по "+null);
+            System.out.println(logParser.getAllDoneTasksAndTheirNumber(date1, null));
+
         } catch (ParseException e) {
             e.printStackTrace();
         }
