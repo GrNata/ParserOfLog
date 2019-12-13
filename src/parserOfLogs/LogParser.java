@@ -1,6 +1,7 @@
 package parserOfLogs;
 
 import parserOfLogs.query.IPQuery;
+import parserOfLogs.query.UserQuery;
 
 import java.io.File;
 import java.io.FilenameFilter;
@@ -12,8 +13,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
-public class LogParser implements IPQuery {
-
+public class LogParser implements IPQuery, UserQuery {
     private Path logDir;
     private DateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss", Locale.ENGLISH);
 
@@ -82,12 +82,7 @@ public class LogParser implements IPQuery {
 //                sSet.add(idStr);
 //            }
 //            Date date = regersDate(str);
-            Date date = null;
-            try {
-                date = dateFormat.parse(splitStr[2]);
-            } catch (ParseException e) {
-                e.printStackTrace();
-            }
+            Date date = formatLogDate(splitStr[2]);
             if (isDate(date, after, before))
 //            if ((after == null || date.after(after) || after.equals(date)) &&
 //                    (before == null || date.before(before) || before.equals(date)))
@@ -122,12 +117,7 @@ public class LogParser implements IPQuery {
 //                    idUser = regarsId(str);
 //                Date date = regersDate(str);
             String[] splitList = splitList(str);
-            Date date = null;
-            try {
-                date = dateFormat.parse(splitList[2]);
-            } catch (ParseException e) {
-                e.printStackTrace();
-            }
+            Date date = formatLogDate(splitList[2]);
             String idUser = splitList[1];
 
             if (idUser.equals(user) && isDate(date, after, before))
@@ -154,12 +144,7 @@ public class LogParser implements IPQuery {
 ////                System.out.println(idStr+"-event = "+event.toString());
 //                Date date = regersDate(str);
             String[] splitList = splitList(str);
-            Date date = null;
-            try {
-                date = dateFormat.parse(splitList[2]);
-            } catch (ParseException e) {
-                e.printStackTrace();
-            }
+            Date date = formatLogDate(splitList[2]);
             String eventStr = splitList[3];
             if (eventStr.equals(event.toString()) && isDate(date, after, before))
 //                        && (after == null || date.after(after) || after.equals(date)) &&
@@ -185,12 +170,7 @@ public class LogParser implements IPQuery {
 ////                System.out.println(statusStr);
 //                Date date = regersDate(str);
             String[] splitList = splitList(str);
-            Date date = null;
-            try {
-                date = dateFormat.parse(splitList[2]);
-            } catch (ParseException e) {
-                e.printStackTrace();
-            }
+            Date date = formatLogDate(splitList[2]);
             String statusStr = splitList[4];
             if ((statusStr.equals(status.toString())) && isDate(date, after, before))
 //                    sSet.add(regarsId(str));
@@ -205,7 +185,7 @@ public class LogParser implements IPQuery {
 
         try {
             if (Files.isDirectory(logDir)) {
-
+//  ищем файлы с расширением лог в данной директории, затем считываем в sList
                 for (File f : logDir.toFile().listFiles(new FilenameFilter() {
                     @Override
                     public boolean accept(File dir, String name) {
@@ -236,23 +216,40 @@ public class LogParser implements IPQuery {
 
     // Разбивка строки на массив по табуляции
     private String[] splitList(String str){
-        String[] arrStr = new String[5];
-        arrStr = str.split("\\t");
-        if (arrStr[3].contains(" "))
-            arrStr[3] = arrStr[3].substring(0, arrStr[3].indexOf(" "));
+        String[] arrStr = new String[6];
+        String[] arr = str.split("\\t");
+// последний элемнт содержит номер задачи
+        for (int i=0; i<arr.length; i++)
+            arrStr[i] = arr[i];
+
+        if (arrStr[3].contains(" ")) {
+            String tempStr = arrStr[3];
+            arrStr[3] = tempStr.substring(0, tempStr.indexOf(" "));
+            arrStr[5] = tempStr.substring(tempStr.indexOf(" ")).trim();
+        }
 //        System.out.println("SPLIT:");
 //        for (int i=0; i<arrStr.length; i++)     System.out.println(arrStr[i]);
 //        System.out.println("____________________________________");
         return arrStr;
     }
 
-    //  Проерка даты под условие
+    //  Проверка даты под условие
     private boolean isDate(Date date, Date after, Date before){
 
         if ((after == null || date.after(after) || after.equals(date)) &&
                 (before == null || date.before(before) || before.equals(date)))
             return true;
         return false;
+    }
+
+    //      форматирование заданной даты
+    private Date formatLogDate(String sDate){
+        try {
+            return dateFormat.parse(sDate);
+        } catch (ParseException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
 
@@ -281,7 +278,198 @@ public class LogParser implements IPQuery {
 ////            sSet.add(idStr);
 //        }
 //        return idStr;
-//    }
+//
+//__________________________________________________________________________________
 
+    //______________________________________________________________________
+    @Override
+    public Set<String> getAllUsers() {
+        //  должен возвращать всех пользователей.
+        List<String> sList = readFile();
+        Set<String> sSet = new HashSet<>();
+
+        for (String str : sList){
+            String[] splitList = splitList(str);
+            sSet.add(splitList[1]);
+        }
+        return sSet;
+    }
+
+    @Override
+    public int getNumberOfUsers(Date after, Date before) {
+        // должен возвращать количество уникальных пользователей.
+        List<String> sList = readFile();
+        Set<String> sSet = new HashSet<>();
+
+        for (String str : sList){
+            String[] splitList = splitList(str);
+            Date date = formatLogDate(splitList[2]);
+            if (isDate(date, after, before))
+                sSet.add(splitList[1]);
+        }
+        return sSet.size();
+    }
+
+    @Override
+    public int getNumberOfUserEvents(String user, Date after, Date before) {
+        //  должен возвращать количество событий от определенного пользователя.
+        List<String> sList = readFile();
+        Set<String> sSet = new HashSet<>();
+
+        for (String str : sList){
+            String[] splitList = splitList(str);
+            Date date = formatLogDate(splitList[2]);
+            if (user.equals(splitList[1]) && isDate(date, after, before))
+                sSet.add(splitList[3]);
+        }
+        return sSet.size();
+    }
+
+    @Override
+    public Set<String> getUsersForIP(String ip, Date after, Date before) {
+        //  должен возвращать пользователей с определенным IP.
+        //  Несколько пользователей могут использовать один и тот же IP.
+        List<String> sList = readFile();
+        Set<String> sSet = new HashSet<>();
+
+        for (String str : sList){
+            String[] splitList = splitList(str);
+            Date date = formatLogDate(splitList[2]);
+//            System.out.println("id= "+splitList[0]+" - "+splitList[1]);
+
+            if (ip.equals(splitList[0]) && isDate(date, after, before))
+                sSet.add(splitList[1]);
+        }
+        return sSet;
+    }
+
+    @Override
+    public Set<String> getLoggedUsers(Date after, Date before) {
+        //  должен возвращать пользователей, которые делали логин.
+        List<String> sList = readFile();
+        Set<String> sSet = new HashSet<>();
+
+        for (String str : sList){
+            String[] splitList = splitList(str);
+            Date date = formatLogDate(splitList[2]);
+//            System.out.println("id= "+splitList[0]+" - "+splitList[1]);
+
+            if ("LOGIN".equals(splitList[3]) && isDate(date, after, before))
+                sSet.add(splitList[1]);
+        }
+        return sSet;
+    }
+
+    @Override
+    public Set<String> getDownloadedPluginUsers(Date after, Date before) {
+        //  должен возвращать пользователей, которые скачали плагин.
+        List<String> sList = readFile();
+        Set<String> sSet = new HashSet<>();
+
+        for (String str : sList){
+            String[] splitList = splitList(str);
+            Date date = formatLogDate(splitList[2]);
+//            System.out.println("id= "+splitList[0]+" - "+splitList[1]);
+
+            if (Event.DOWNLOAD_PLUGIN.toString().equals(splitList[3])
+                    && Status.OK.toString().equals(splitList[4])
+                    && isDate(date, after, before))
+                sSet.add(splitList[1]);     //  проверка на OK нужна????
+        }
+        return sSet;
+    }
+
+    @Override
+    public Set<String> getWroteMessageUsers(Date after, Date before) {
+        //  должен возвращать пользователей, которые отправили сообщение.
+        List<String> sList = readFile();
+        Set<String> sSet = new HashSet<>();
+
+        for (String str : sList){
+            String[] splitList = splitList(str);
+            Date date = formatLogDate(splitList[2]);
+//            System.out.println("id= "+splitList[0]+" - "+splitList[1]);
+
+            if (Event.WRITE_MESSAGE.toString().equals(splitList[3])
+                    && Status.OK.toString().equals(splitList[4])
+                    && isDate(date, after, before))
+                sSet.add(splitList[1]);     //  проверка на OK нужна????
+        }
+        return sSet;
+    }
+
+    @Override
+    public Set<String> getSolvedTaskUsers(Date after, Date before) {
+        //  должен возвращать пользователей, которые решали любую задачу.
+        List<String> sList = readFile();
+        Set<String> sSet = new HashSet<>();
+
+        for (String str : sList){
+            String[] splitList = splitList(str);
+            Date date = formatLogDate(splitList[2]);
+//            System.out.println("id= "+splitList[0]+" - "+splitList[1]);
+
+            if (Event.SOLVE_TASK.toString().equals(splitList[3])
+                    && isDate(date, after, before))
+                sSet.add(splitList[1]);
+        }
+        return sSet;
+    }
+
+    @Override
+    public Set<String> getSolvedTaskUsers(Date after, Date before, int task) {
+        //  должен возвращать пользователей, которые решали задачу с номером task.
+        List<String> sList = readFile();
+        Set<String> sSet = new HashSet<>();
+
+        for (String str : sList){
+            String[] splitList = splitList(str);
+            Date date = formatLogDate(splitList[2]);
+//            System.out.println("id= "+splitList[0]+" - "+splitList[1]);
+
+            if (Event.SOLVE_TASK.toString().equals(splitList[3])
+                    && Integer.parseInt(splitList[5]) == task
+                    && isDate(date, after, before))
+                sSet.add(splitList[1]);
+        }
+        return sSet;
+    }
+
+    @Override
+    public Set<String> getDoneTaskUsers(Date after, Date before) {
+        //  должен возвращать пользователей, которые решили любую задачу.
+        List<String> sList = readFile();
+        Set<String> sSet = new HashSet<>();
+
+        for (String str : sList){
+            String[] splitList = splitList(str);
+            Date date = formatLogDate(splitList[2]);
+
+            if (Event.DONE_TASK.toString().equals(splitList[3])
+//                    && Status.OK.toString().equals(splitList[4])
+                    && isDate(date, after, before))
+                sSet.add(splitList[1]);
+        }
+        return sSet;
+    }
+
+    @Override
+    public Set<String> getDoneTaskUsers(Date after, Date before, int task) {
+        //  должен возвращать пользователей, которые решили задачу с номером task.
+        List<String> sList = readFile();
+        Set<String> sSet = new HashSet<>();
+
+        for (String str : sList){
+            String[] splitList = splitList(str);
+            Date date = formatLogDate(splitList[2]);
+
+            if (Event.DONE_TASK.toString().equals(splitList[3])
+                    && Integer.parseInt(splitList[5]) == task
+//                    && Status.OK.toString().equals(splitList[4])
+                    && isDate(date, after, before))
+                sSet.add(splitList[1]);
+        }
+        return sSet;
+    }
 
 }
