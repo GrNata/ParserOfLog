@@ -167,6 +167,47 @@ public class Solution {
             System.out.println(logParser.execute("get event"));
             System.out.println(logParser.execute("get status"));
 
+            System.out.println("\nexecute-2__________________________________");
+            System.out.println("get ip for user = \"Vasya Pupkin\" - "+logParser.execute("get ip for user = \"Vasya Pupkin\""));
+            System.out.println("get ip for date = \"11.12.2013 10:11:12\" - "+logParser.execute("get ip for date = \"11.12.2013 10:11:12\""));
+            System.out.println("get ip for event = \"WRITE_MESSAGE\" - "+logParser.execute("get ip for event = \"WRITE_MESSAGE\""));
+            System.out.println("get ip for status = \"FAILED\" - "+logParser.execute("get ip for status = \"FAILED\""));
+            System.out.println("++++++++++++++++");
+            System.out.println("get user for ip = \"127.0.0.1\" - "+logParser.execute("get user for ip = \"127.0.0.1\""));
+            System.out.println("get user for date = \"11.12.2013 10:11:12\" - "+logParser.execute("get user for date = \"11.12.2013 10:11:12\""));
+            System.out.println("get user for event = \"LOGIN - "+logParser.execute("get user for event = \"LOGIN\""));
+            System.out.println("get user for event = \"DONE_TASK - "+logParser.execute("get user for event = \"DONE_TASK\""));
+            System.out.println("get user for event = \"SOLVE_TASK - "+logParser.execute("get user for event = \"SOLVE_TASK\""));
+            System.out.println("get user for event = \"WRITE_MESSAGE - "+logParser.execute("get user for event = \"WRITE_MESSAGE\""));
+            System.out.println("get user for event = \"DOWNLOAD_PLUGIN - "+logParser.execute("get user for event = \"DOWNLOAD_PLUGIN\""));
+            System.out.println("get user for status = \"OK - "+logParser.execute("get user for status = \"OK\""));
+            System.out.println("get user for status = \"FAILED - "+logParser.execute("get user for status = \"FAILED\""));
+            System.out.println("get user for status = \"ERROR - "+logParser.execute("get user for status = \"ERROR\""));
+            System.out.println("+++++++++++++++++++++++++");
+            System.out.println("get date for ip = \"127.0.0.1 - "+logParser.execute("get date for ip = \"127.0.0.1\""));
+            System.out.println("get date for user = \"Amigo - "+logParser.execute("get date for user = \"Amigo\""));
+            System.out.println("get date for event = \"DOWNLOAD_PLUGIN - "+logParser.execute("get date for event = \"DOWNLOAD_PLUGIN\""));
+            System.out.println("get date for event = \"WRITE_MESSAGE - "+logParser.execute("get date for event = \"WRITE_MESSAGE\""));
+            System.out.println("get date for event = \"SOLVE_TASK - "+logParser.execute("get date for event = \"SOLVE_TASK\""));
+            System.out.println("get date for event = \"DONE_TASK - "+logParser.execute("get date for event = \"DONE_TASK\""));
+            System.out.println("get date for event = \"LOGIN - "+logParser.execute("get date for event = \"LOGIN\""));
+            System.out.println("get date for status = \"OK - "+logParser.execute("get date for status = \"OK\""));
+            System.out.println("get date for status = \"OK - "+logParser.execute("get date for status = \"OK\""));
+            System.out.println("get date for status = \"ERROR - "+logParser.execute("get date for status = \"ERROR\""));
+            System.out.println("+++++++++++++++++++++++++");
+            System.out.println("get status for ip = \"127.0.0.1 - "+logParser.execute("get status for ip = \"127.0.0.1\""));
+            System.out.println("get status for user = \"Vasya Pupkin - "+logParser.execute("get status for user = \"Vasya Pupkin\""));
+            System.out.println("get status for date = \"14.11.2015 07:08:01 - "+logParser.execute("get status for date = \"14.11.2015 07:08:01\""));
+            System.out.println("get status for event = \"WRITE_MESSAGE - "+logParser.execute("get status for event = \"WRITE_MESSAGE\""));
+            System.out.println("+++++++++++++++++++++++++++");
+            System.out.println("get event for ip = \"127.0.0.1 - "+logParser.execute("get event for ip = \"127.0.0.1\""));
+            System.out.println("get event for user = \"Amigo - "+logParser.execute("get event for user = \"Amigo\""));
+            System.out.println("get event for date = \"30.08.2012 16:08:40 - "+logParser.execute("get event for date = \"30.08.2012 16:08:40\""));
+            System.out.println("get event for status = \"ERROR - "+logParser.execute("get event for status = \"ERROR\""));
+            System.out.println("get event for status = \"FAILED - "+logParser.execute("get event for status = \"FAILED\""));
+            System.out.println("get event for status = \"OK - "+logParser.execute("get event for status = \"OK\""));
+
+
 
 
         } catch (ParseException e) {

@@ -388,17 +388,13 @@ public class LogParser implements IPQuery, UserQuery, DateQuery, EventQuery, QLQ
     public Set<String> getLoggedUsers(Date after, Date before) {
         //  должен возвращать пользователей, которые делали логин.
         List<String> sList = readFile();
-        Set<String> sSet = new HashSet<>();
-
-        for (String str : sList){
-            String[] splitList = splitList(str);
-            Date date = formatLogDate(splitList[2]);
-//            System.out.println("id= "+splitList[0]+" - "+splitList[1]);
-
-            if ("LOGIN".equals(splitList[3]) && isDate(date, after, before))
-                sSet.add(splitList[1]);
+        List<UserLog> userLogs = getUserLog(sList, after, before);
+        Set<String> sUser = new HashSet<>();
+        for (UserLog ul : userLogs){
+            if (ul.getEvent().equals(Event.LOGIN))
+                sUser.add(ul.getUser());
         }
-        return sSet;
+        return sUser;
     }
 
     @Override
@@ -410,8 +406,6 @@ public class LogParser implements IPQuery, UserQuery, DateQuery, EventQuery, QLQ
         for (String str : sList){
             String[] splitList = splitList(str);
             Date date = formatLogDate(splitList[2]);
-//            System.out.println("id= "+splitList[0]+" - "+splitList[1]);
-
             if (Event.DOWNLOAD_PLUGIN.toString().equals(splitList[3])
                     && Status.OK.toString().equals(splitList[4])
                     && isDate(date, after, before))
@@ -429,8 +423,6 @@ public class LogParser implements IPQuery, UserQuery, DateQuery, EventQuery, QLQ
         for (String str : sList){
             String[] splitList = splitList(str);
             Date date = formatLogDate(splitList[2]);
-//            System.out.println("id= "+splitList[0]+" - "+splitList[1]);
-
             if (Event.WRITE_MESSAGE.toString().equals(splitList[3])
                     && Status.OK.toString().equals(splitList[4])
                     && isDate(date, after, before))
@@ -448,8 +440,6 @@ public class LogParser implements IPQuery, UserQuery, DateQuery, EventQuery, QLQ
         for (String str : sList){
             String[] splitList = splitList(str);
             Date date = formatLogDate(splitList[2]);
-//            System.out.println("id= "+splitList[0]+" - "+splitList[1]);
-
             if (Event.SOLVE_TASK.toString().equals(splitList[3])
                     && isDate(date, after, before))
                 sSet.add(splitList[1]);
@@ -466,8 +456,6 @@ public class LogParser implements IPQuery, UserQuery, DateQuery, EventQuery, QLQ
         for (String str : sList){
             String[] splitList = splitList(str);
             Date date = formatLogDate(splitList[2]);
-//            System.out.println("id= "+splitList[0]+" - "+splitList[1]);
-
             if (Event.SOLVE_TASK.toString().equals(splitList[3])
                     && Integer.parseInt(splitList[5]) == task
                     && isDate(date, after, before))
@@ -480,18 +468,23 @@ public class LogParser implements IPQuery, UserQuery, DateQuery, EventQuery, QLQ
     public Set<String> getDoneTaskUsers(Date after, Date before) {
         //  должен возвращать пользователей, которые решили любую задачу.
         List<String> sList = readFile();
-        Set<String> sSet = new HashSet<>();
-
-        for (String str : sList){
-            String[] splitList = splitList(str);
-            Date date = formatLogDate(splitList[2]);
-
-            if (Event.DONE_TASK.toString().equals(splitList[3])
-//                    && Status.OK.toString().equals(splitList[4])
-                    && isDate(date, after, before))
-                sSet.add(splitList[1]);
+        List<UserLog> userLogs = getUserLog(sList, after, before);
+        Set<String> sUser = new HashSet<>();
+        for (UserLog ul : userLogs){
+            if (ul.getEvent().equals(Event.DONE_TASK))
+                sUser.add(ul.getUser());
         }
-        return sSet;
+        return sUser;
+//        Set<String> sSet = new HashSet<>();
+//
+//        for (String str : sList){
+//            String[] splitList = splitList(str);
+//            Date date = formatLogDate(splitList[2]);
+//            if (Event.DONE_TASK.toString().equals(splitList[3])
+//                    && isDate(date, after, before))
+//                sSet.add(splitList[1]);
+//        }
+//        return sSet;
     }
 
     @Override
@@ -503,7 +496,6 @@ public class LogParser implements IPQuery, UserQuery, DateQuery, EventQuery, QLQ
         for (String str : sList){
             String[] splitList = splitList(str);
             Date date = formatLogDate(splitList[2]);
-
             if (Event.DONE_TASK.toString().equals(splitList[3])
                     && Integer.parseInt(splitList[5]) == task
 //                    && Status.OK.toString().equals(splitList[4])
@@ -518,18 +510,24 @@ public class LogParser implements IPQuery, UserQuery, DateQuery, EventQuery, QLQ
     public Set<Date> getDatesForUserAndEvent(String user, Event event, Date after, Date before) {
         // должен возвращать даты, когда определенный пользователь произвел определенное событие.
         List<String> sList = readFile();
-        Set<Date> sSet = new HashSet<>();
-
-        for (String str : sList){
-            String[] splitList = splitList(str);
-            Date date = formatLogDate(splitList[2]);
-
-            if (user.equals(splitList[1])
-                    && event.toString().equals(splitList[3])
-                    && isDate(date, after, before))
-                sSet.add(date);
+        Set<Date> sDate = new HashSet<>();
+        List<UserLog> sUser = getUserLog(sList, null, null);;
+        for (UserLog ul: sUser){
+            if ((ul.getUser().equals(user) || user == null) &&
+                    ul.getEvent().equals(event))
+                sDate.add(ul.getDate());
         }
-        return sSet;
+        return sDate;
+//        for (String str : sList){
+//            String[] splitList = splitList(str);
+//            Date date = formatLogDate(splitList[2]);
+//
+//            if (user.equals(splitList[1])
+//                    && event.toString().equals(splitList[3])
+//                    && isDate(date, after, before))
+//                sSet.add(date);
+//        }
+//        return sSet;
     }
 
     @Override
@@ -592,21 +590,25 @@ public class LogParser implements IPQuery, UserQuery, DateQuery, EventQuery, QLQ
         //   должен возвращать дату, когда пользователь впервые попытался решить определенную задачу. Если такой даты в логах нет - null.
         List<String> sList = readFile();
         Set<Date> sSet = new HashSet<>();
-
+        List<UserLog> userLogs = getUserLog(sList, null, null);
         TreeSet<Date> dateSet = new TreeSet<>();
-
-        for (String str : sList){
-            String[] splitList = splitList(str);
-            Date date = formatLogDate(splitList[2]);
-            if (user.equals(splitList[1])
-                    && Event.SOLVE_TASK.toString().equals(splitList[3])
-                    && Integer.parseInt(splitList[5]) == task
-                    && isDate(date, after, before))
-                dateSet.add(date);
+        for (UserLog ul :userLogs){
+            if (ul.getUser().equals(user)
+                    && Event.SOLVE_TASK.equals(ul.getEvent())
+                    && ul.getTask() == task )
+                dateSet.add(ul.getDate());
         }
-        if (dateSet.size() > 0)
-            return dateSet.first();
-        return null;
+//        for (String str : sList){
+//            String[] splitList = splitList(str);
+//            Date date = formatLogDate(splitList[2]);
+//            if (user.equals(splitList[1])
+//                    && Event.SOLVE_TASK.toString().equals(splitList[3])
+//                    && Integer.parseInt(splitList[5]) == task
+//                    && isDate(date, after, before))
+//                dateSet.add(date);
+//        }
+//        if (dateSet.size() > 0)
+        return dateSet.first();
     }
 
     @Override
@@ -635,19 +637,24 @@ public class LogParser implements IPQuery, UserQuery, DateQuery, EventQuery, QLQ
     public Set<Date> getDatesWhenUserWroteMessage(String user, Date after, Date before) {
         //  должен возвращать даты, когда пользователь написал сообщение.
         List<String> sList = readFile();
+        List<UserLog> userLog = getUserLog(sList, after,  before);
         Set<Date> dateSet = new HashSet<>();
-
-        for (String str : sList){
-            String[] splitList = splitList(str);
-            Date date = formatLogDate(splitList[2]);
-            if (user.equals(splitList[1])
-                    && Event.WRITE_MESSAGE.toString().equals(splitList[3])
-//                    && Status.OK.toString().equals(splitList[4])
-                    && isDate(date, after, before)
-            )
-                dateSet.add(date);
+        for (UserLog ul : userLog){
+            if ((ul.getUser().equals(user) || user == null)
+                    && Event.WRITE_MESSAGE.equals(ul.getEvent()))
+                dateSet.add(ul.getDate());
         }
-//        if (dateSet.size() > 0)
+//        for (String str : sList){
+//            String[] splitList = splitList(str);
+//            Date date = formatLogDate(splitList[2]);
+//            if (user.equals(splitList[1])
+//                    && Event.WRITE_MESSAGE.toString().equals(splitList[3])
+////                    && Status.OK.toString().equals(splitList[4])
+//                    && isDate(date, after, before)
+//                    )
+//                dateSet.add(date);
+//        }
+////        if (dateSet.size() > 0)
         return dateSet;
     }
 
@@ -806,7 +813,7 @@ public class LogParser implements IPQuery, UserQuery, DateQuery, EventQuery, QLQ
         List<UserLog> userLogs = getUserLog(sList, after, before);
         Map<Integer, Integer> map = new HashMap<>();
         int count = 0;
-        for (UserLog ul : userLogs){
+        for (UserLog ul : userLogs) {
             if (ul.getEvent().equals(Event.DONE_TASK)) {
                 if (map.get(ul.getTask()) != null) {
                     count = map.get(ul.getTask());
@@ -820,16 +827,242 @@ public class LogParser implements IPQuery, UserQuery, DateQuery, EventQuery, QLQ
     }
 
 //________________________QLQuery_______________________________________________________________________________________
+
+
     @Override
-    public Set<Object> execute(String query) {
-        switch (query){
-            case "get ip" :     return new HashSet<>(getUniqueIPs(null, null));
-            case "get user" :   return new HashSet<>(getAllUsers());
-            case "get date" :   return new HashSet<>(getAllDate());
-            case "get event":   return new HashSet<>(getAllEvents(null, null));
-            case "get status":  return new HashSet<>(getAllStatus());
-            default:    return null;
+    public HashSet execute(String query) {
+//  get field1 for field2 = "value1"
+        //  get ip for user = "Vasya"
+        //2) get user for event = "DONE_TASK"
+        //3) get event for date = "03.01.2014 03:45:23"
+
+        if (!query.contains("for")) {
+            switch (query) {
+                case "get ip":
+                    return new HashSet<>(getUniqueIPs(null, null));
+                case "get user":
+                    return new HashSet<>(getAllUsers());
+                case "get date":
+                    return new HashSet<>(getAllDate());
+                case "get event":
+                    return new HashSet<>(getAllEvents(null, null));
+                case "get status":
+                    return new HashSet<>(getAllStatus());
+                default:
+                    return null;
+            }
+        } else {
+            String[] arr = getStringArr(query);
+            switch (arr[0]){        //  field1
+                case "ip": switch (arr[1]){     //  field2
+                    case "user":    //  +
+                        return new HashSet<>(getIPsForUser(arr[2], null, null));
+                    case "date":    //  +
+                        return new HashSet<>(getUniqueIPs(formatLogDate(arr[2]), formatLogDate(arr[2])));
+                    case "event":   //  +
+                        return new HashSet<>(getIPsForEvent(Event.valueOf(arr[2]), null, null));
+                    case "status":  // +
+                        return new HashSet<>(getIPsForStatus(Status.valueOf(arr[2]), null, null));
+                    default: return null;
+                }
+                case "user":
+                    switch (arr[1]){
+                        case "ip":  // +
+                            return new HashSet<>(getUsersForIP(arr[2], null, null));
+                        case "date":    // +
+                            return new HashSet<>(getUserForDate(formatLogDate(arr[2]), null, null));
+                        case "event": {
+                            switch (Event.valueOf(arr[2])) {
+                                case LOGIN: return new HashSet<>(getLoggedUsers(null, null));   //  +
+                                case DONE_TASK: return new HashSet<>(getDoneTaskUsers(null, null));    // +
+                                case SOLVE_TASK: return new HashSet<>(getSolvedTaskUsers(null, null));  // +
+                                case WRITE_MESSAGE: return new HashSet<>(getWroteMessageUsers(null, null)); //  +
+                                case DOWNLOAD_PLUGIN: return new HashSet<>(getDownloadedPluginUsers(null, null));   // +
+                                default: return null;
+                            }
+                        }
+                        case "status": return new HashSet<>(getUserStatus(Status.valueOf(arr[2]))); //  +
+                        default: return null;
+                    }
+                case "date":
+                    switch ((arr[1])){
+                        case "ip":  return new HashSet<>(getDateForIp(arr[2])); //  +
+                        case "user":    return new HashSet<>(getDateForUser(arr[2]));   //  +
+                        case "event":
+                            switch (Event.valueOf(arr[2])) {
+                                case DOWNLOAD_PLUGIN: return new HashSet<>(getDatesForUserAndEvent(null, Event.valueOf(arr[2]), null, null));
+                                case WRITE_MESSAGE:  return new HashSet<>(getDatesWhenUserWroteMessage(null, null, null));
+                                case SOLVE_TASK: return new HashSet(getDatesForEvent(Event.valueOf(arr[2])));
+                                case DONE_TASK:  return new HashSet(getDatesForEvent(Event.DONE_TASK));
+                                case LOGIN: return new HashSet(getDatesForEvent(Event.LOGIN));
+                                default: return null;
+                            }
+                        case "status": return new HashSet(getDatesForStatus(Status.valueOf(arr[2])));
+                        default: return null;
+                    }
+                case "event":
+                    switch (arr[1]){
+                        case "ip":  return new HashSet(getEventsForIP(arr[2],null, null));
+                        case "user":    return  new HashSet(getEventsForUser(arr[2], null, null));
+                        case "date":    return new HashSet(getAllEvents(formatLogDate(arr[2]), formatLogDate(arr[2])));
+                        case "status":
+                            switch (Status.valueOf(arr[2])){
+                                case ERROR: return new HashSet(getErrorEvents(null, null));
+                                case FAILED: return new HashSet(getFailedEvents(null, null));
+                                case OK:    return new HashSet(getEvantForStatus(Status.OK));
+                            }
+                        default:    return null;
+                    }
+                case "status":
+                    switch (arr[1]) {
+                        case "ip": return new HashSet(getStatusForIp(arr[2]));
+                        case "user": return  new HashSet(getStatusForUser(arr[2]));
+                        case "date": return new HashSet(getStatusForDate(formatLogDate(arr[2])));
+                        case "event": return new HashSet(getStatusForEvent(Event.valueOf(arr[2])));
+                    }
+                default:    return null;
+            }
         }
+//        return null;
+    }
+
+    //  Получение всех event для status
+    private Set<Event> getEvantForStatus(Status status){
+        List<String> sList = readFile();
+        Set<Event> sSet = new HashSet<>();
+        List<UserLog> userLogs = getUserLog(sList, null, null);
+        Set<Status> statusSet = new HashSet<>();
+        for (UserLog ul : userLogs) {
+            if (ul.getStatus().equals(status))
+                sSet.add(ul.getEvent());
+        }
+        return sSet;
+    }
+
+    //  Получение всех статусов для IP
+    private Set<Status> getStatusForIp(String ip){
+        List<String> sList = readFile();
+        List<UserLog> userLogs = getUserLog(sList, null, null);
+        Set<Status> statusSet = new HashSet<>();
+        for (UserLog ul : userLogs) {
+            if (ul.getIp().equals(ip))
+                statusSet.add(ul.getStatus());
+        }
+        return statusSet;
+    }
+
+    //  Получение всех статусов для user
+    private Set<Status> getStatusForUser(String user){
+        List<String> sList = readFile();
+        Set<Date> sSet = new HashSet<>();
+        List<UserLog> userLogs = getUserLog(sList, null, null);
+        Set<Status> statusSet = new HashSet<>();
+        for (UserLog ul : userLogs) {
+            if (ul.getUser().equals(user))
+                statusSet.add(ul.getStatus());
+        }
+        return statusSet;
+    }
+
+    //  Получение всех статусов для date
+    private Set<Status> getStatusForDate(Date date){
+        List<String> sList = readFile();
+        Set<Date> sSet = new HashSet<>();
+        List<UserLog> userLogs = getUserLog(sList, null, null);
+        Set<Status> statusSet = new HashSet<>();
+        for (UserLog ul : userLogs) {
+            if (ul.getDate().equals(date))
+                statusSet.add(ul.getStatus());
+        }
+        return statusSet;
+    }
+
+    //  Получение всех статусов для event
+    private Set<Status> getStatusForEvent(Event event){
+        List<String> sList = readFile();
+        Set<Date> sSet = new HashSet<>();
+        List<UserLog> userLogs = getUserLog(sList, null, null);
+        Set<Status> statusSet = new HashSet<>();
+        for (UserLog ul : userLogs) {
+            if (ul.getEvent().equals(event))
+                statusSet.add(ul.getStatus());
+        }
+        return statusSet;
+    }
+
+    //  Получение всех дат для status
+    private Set<Date> getDatesForStatus(Status status){
+        List<String> sList = readFile();
+        Set<Date> sSet = new HashSet<>();
+        List<UserLog> userLogs = getUserLog(sList, null, null);
+        TreeSet<Date> dateSet = new TreeSet<>();
+        for (UserLog ul : userLogs) {
+            if (status.equals(ul.getStatus()))
+                dateSet.add(ul.getDate());
+        }
+        return dateSet;
+    }
+
+    //  Получение всех дат для любого event
+    private Set<Date> getDatesForEvent(Event event) {
+        List<String> sList = readFile();
+        Set<Date> sSet = new HashSet<>();
+        List<UserLog> userLogs = getUserLog(sList, null, null);
+        TreeSet<Date> dateSet = new TreeSet<>();
+        for (UserLog ul : userLogs) {
+            if (event.equals(ul.getEvent()))
+                dateSet.add(ul.getDate());
+        }
+        return dateSet;
+    }
+
+
+    // Возврат пользователей для определенной даты
+    private Set<String> getUserForDate(Date date, Date after, Date before){
+        List<String> sList = readFile();
+        List<UserLog> userLogs = getUserLog(sList, after, before);
+        Set<String> sUser = new HashSet<>();
+        for (UserLog ul : userLogs){
+            if (ul.getDate().equals(date))
+                sUser.add(ul.getUser());
+        }
+        return sUser;
+    }
+
+    //  Получение всех дат для IP
+    private Set<Date> getDateForIp(String ip){
+        List<String> sList = readFile();
+        List<UserLog> userLogs = getUserLog(sList, null, null);
+        Set<Date> sDate = new HashSet<>();
+        for (UserLog ul : userLogs){
+            if (ul.getIp().equals(ip))
+                sDate.add(ul.getDate());
+        }
+        return sDate;
+    }
+
+    //  Получене всех дат для пользователя
+    private Set<Date> getDateForUser(String user){
+        List<String> sList = readFile();
+        List<UserLog> userLogs = getUserLog(sList, null, null);
+        Set<Date> sDate = new HashSet<>();
+        for (UserLog ul : userLogs){
+            if (ul.getUser().equals(user))
+                sDate.add(ul.getDate());
+        }
+        return sDate;
+    }
+
+    //  Получение всех пользователей по статусам
+    private Set<String> getUserStatus(Status status){
+        List<String> sList = readFile();
+        List<UserLog> userLogs = getUserLog(sList, null, null);
+        Set<String> sStatus = new HashSet<>();
+        for (UserLog ul : userLogs){
+            if (ul.getStatus().equals(status))
+                sStatus.add(ul.getUser());
+        }
+        return sStatus;
     }
 
     // Получение всех дат из логов
@@ -852,5 +1085,22 @@ public class LogParser implements IPQuery, UserQuery, DateQuery, EventQuery, QLQ
             sStatus.add(ul.getStatus());
         }
         return sStatus;
+    }
+
+    // get ip for user = "Vasya"
+//Общий формат запроса с параметром:    get field1 for field2 = "value1"
+    private String[] getStringArr(String query){
+        String[] arr = new String[3];
+
+        arr[0] = query.substring(query.indexOf(" "), query.indexOf(" for")).trim();
+        arr[1] = query.substring(query.indexOf("for "), query.indexOf(" ="));
+        arr[1] = arr[1].substring(4);
+        arr[2] = query.substring(query.indexOf("= \""));
+        arr[2] = arr[2].substring(3, (arr[2].length()-1));
+//        arr[2] =arr[2].substring(0, arr[2].indexOf(" "));
+
+//        for (int i=0; i<arr.length; i++)    System.out.println(arr[i]);
+
+        return arr;
     }
 }
